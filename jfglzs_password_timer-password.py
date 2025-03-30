@@ -1,6 +1,19 @@
 # -*- coding: GBK -*-
+from math import log
+import loguru
 import requests
 from datetime import datetime, timedelta
+from loguru import logger
+logo = '''
+
+██████╗ ██╗   ██╗    ██╗     ███████╗██╗  ██╗ ██╗███████╗██████╗ 
+██╔══██╗╚██╗ ██╔╝    ██║     ╚══███╔╝██║  ██║███║╚════██║╚════██╗
+██████╔╝ ╚████╔╝     ██║       ███╔╝ ███████║╚██║    ██╔╝ █████╔╝
+██╔══██╗  ╚██╔╝      ██║      ███╔╝  ██╔══██║ ██║   ██╔╝  ╚═══██╗
+██████╔╝   ██║       ███████╗███████╗██║  ██║ ██║   ██║  ██████╔╝
+╚═════╝    ╚═╝       ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═╝   ╚═╝  ╚═════╝ 
+                                                                                                                                                   
+'''
 
 def flush_issuer():
     try:
@@ -48,6 +61,10 @@ def disable_issuer(pd_old_text):
 
 # 使用示例
 if __name__ == "__main__":
+    print(logo)
+    nowday = str(datetime.now().strftime('%Y-%m-%d'))
+    logger.info("现在时间：" + nowday)
+    logger.info("正在计算临时密码！")
     # 生成合法测试代码（假设当前时间有效）
     valid_code = "8" + sort_issuer().strip()
     print(f"生成的合法代码: {valid_code}")
@@ -60,4 +77,8 @@ if __name__ == "__main__":
     
     for code in test_cases:
         is_valid, msg, _ = disable_issuer(code)
-        print(f"输入: {code}\n验证结果: {'通过' if is_valid else '失败'}\n信息: {msg}\n")
+        if msg == "":
+            msg = "无"
+        print(f"输入: {code}\n验证结果: {'通过' if is_valid else '失败'}\n错误信息: {msg}\n")
+        logger.info("请按回车键退出")
+        input()
