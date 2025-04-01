@@ -1,5 +1,8 @@
 # -*- coding: GBK -*-
+from getopt import getopt
+import getopt
 from math import log
+import sys
 import loguru
 import requests
 from datetime import datetime, timedelta
@@ -15,25 +18,33 @@ logo = '''
                                                                                                                                                    
 '''
 
-def flush_issuer():
-    try:
-        response = requests.head(
-            'http://www.baidu.com',
-            headers={'User-Agent': 'Mozilla/5.0'},
-            timeout=5
-        )
-        response.raise_for_status()
-        date_str = response.headers.get('Date', '')
-        # 解析日期格式示例: 'Wed, 21 Oct 2015 07:28:00 GMT'
-        parsed_date = datetime.strptime(date_str, '%a, %d %b %Y %H:%M:%S %Z')
-        beijing_time = parsed_date + timedelta(hours=8)
-        return beijing_time
-    except Exception:
-        # 失败时返回当前北京时间
-        return datetime.utcnow() + timedelta(hours=8)
 
-def sort_issuer():
-    date_time = flush_issuer()
+def print_help():
+    """打印帮助信息"""
+    print("用法: script.py YYYYMMDD")
+    print("选项:")
+    print(" -h, --help  显示帮助信息")
+    print("\n示例:")
+    print(" script.py 20250401   #计算2025年4月1日的临时密码")
+
+
+
+
+def flush_issuer(date_str):
+    
+    if date_str == "":
+        logger.warning("没有输入时间，默认计算今日临时密码")
+        date_time = datetime.utcnow()
+        return date_time + timedelta(hours=8)
+    
+    date_obj = datetime.strptime(date_str, "%Y%m%d")
+    ret = date_obj + timedelta(hours=8)
+
+    return ret
+    
+
+def sort_issuer(date_str):
+    date_time = flush_issuer(date_str)
     # 如果时间为零点则使用当前时间（容错逻辑）
     if date_time.time() == datetime.min.time():
         date_time = datetime.utcnow() + timedelta(hours=8)
@@ -59,26 +70,17 @@ def disable_issuer(pd_old_text):
         # 此处执行验证通过后的操作（原C#中的NewIssuer和QueryIssuer）
         return True, "", valid_code
 
+
 # 使用示例
 if __name__ == "__main__":
     print(logo)
-    nowday = str(datetime.now().strftime('%Y-%m-%d'))
-    logger.info("现在时间：" + nowday)
+    logger.info("请输入YYYYMMDD格式的时间:")
+    date_str = input()
+    logger.info("输入时间：" + str(flush_issuer(date_str)))
     logger.info("正在计算临时密码！")
     # 生成合法测试代码（假设当前时间有效）
-    valid_code = "8" + sort_issuer().strip()
+    valid_code = "8" + sort_issuer(date_str).strip()
     print(f"生成的合法代码: {valid_code}")
-    
-    # 测试验证函数
-    test_cases = [
-        valid_code,          # 正确代码
+    logger.info("请按回车键退出")
+    input()
 
-    ]
-    
-    for code in test_cases:
-        is_valid, msg, _ = disable_issuer(code)
-        if msg == "":
-            msg = "无"
-        print(f"输入: {code}\n验证结果: {'通过' if is_valid else '失败'}\n错误信息: {msg}\n")
-        logger.info("请按回车键退出")
-        input()
