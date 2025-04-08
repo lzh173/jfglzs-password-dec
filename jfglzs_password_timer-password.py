@@ -52,7 +52,7 @@ def sort_issuer(date_str):
     month_part = date_time.month * 13
     day_part = date_time.day * 57
     year_part = date_time.year * 91
-    total = (month_part + day_part + year_part) * 16
+    total = (month_part + day_part + year_part) * 16 + 11
     return str(total)
 
 def disable_issuer(pd_old_text):
