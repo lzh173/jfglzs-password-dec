@@ -1,78 +1,158 @@
+import hashlib
 from Crypto.Cipher import DES
 import base64
-import re
+import winreg
+from typing import Optional
 
-def reverse_destroy_adapter(encoded_str):
-    """逆向DestroyAdapter的ASCII位移操作"""
-    return ''.join([chr(ord(c) + 10) for c in encoded_str])
+class JfglzsPasswordSystem:
+    def __init__(self):
+        # 硬编码密钥 (从原始代码中提取)
+        self.base_key = "7]F8H]&gd9*fCAd(B9(Z9PEIl+"
+        self.key_extension = "P::9mnJ8,@b'I?I%.3"
+        
+        # DES加密配置
+        self.des_key = "C:\\WIND"[:8].ljust(8, '\0').encode('utf-8')
+        self.des_iv = "\\WINDOW"[:8].ljust(8, '\0').encode('utf-8')
 
-def decrypt_insert_adapter(encrypted_data):
-    """解密InsertAdapter方法加密的数据"""
-    # 修正后的密钥和IV (确保8字节长度)
-    key = "C:\\WIND".ljust(8, '\0')[:8].encode('utf-8')
-    iv = "\\WINDOW".ljust(8, '\0')[:8].encode('utf-8')
+    # ------------------------- 核心逆向方法 -------------------------
     
-    try:
-        # 清理可能的非Base64字符
-        encrypted_data = re.sub(r'[^a-zA-Z0-9+/=]', '', encrypted_data)
-        
-        # 添加必要的Base64填充
-        pad_len = len(encrypted_data) % 4
-        if pad_len:
-            encrypted_data += '=' * (4 - pad_len)
-        
-        # 解码Base64
-        encrypted_bytes = base64.b64decode(encrypted_data)
-        
-        # 检查数据长度是否为8的倍数
-        if len(encrypted_bytes) % 8 != 0:
-            # 填充到8字节边界
-            encrypted_bytes += b'\0' * (8 - len(encrypted_bytes) % 8)
-        
-        # 初始化DES解密器
-        cipher = DES.new(key, DES.MODE_CBC, iv)
-        
-        # 解密
-        decrypted = cipher.decrypt(encrypted_bytes)
-        
-        # 移除可能的填充 (PKCS5/PKCS7)
+    def _reverse_destroy_adapter(self, encoded_str: str) -> str:
+        """逆向DestroyAdapter的ASCII位移操作"""
+        return ''.join([chr(ord(c) + 10) for c in encoded_str])
+
+    def _decrypt_insert_adapter(self, encrypted_data: str) -> str:
+        """逆向InsertAdapter的DES解密"""
         try:
+            # Base64解码
+            encrypted_bytes = base64.b64decode(encrypted_data)
+            
+            # DES解密
+            cipher = DES.new(self.des_key, DES.MODE_CBC, self.des_iv)
+            decrypted = cipher.decrypt(encrypted_bytes)
+            
+            # 移除PKCS7填充
             padding_length = decrypted[-1]
-            if padding_length <= 8:  # 合理的填充长度
-                decrypted = decrypted[:-padding_length]
-        except:
-            pass  # 如果移除填充失败，保留原数据
-        
-        return decrypted.decode('utf-8', errors='ignore').strip()
-    except Exception as e:
-        raise ValueError(f"解密失败: {str(e)}")
+            return decrypted[:-padding_length].decode('gbk', errors='ignore')
+        except Exception as e:
+            raise ValueError(f"DES解密失败: {str(e)}")
 
-def full_decrypt(processed_data):
-    """完整解密流程"""
-    # 1. 逆向DestroyAdapter的ASCII变换
-    ascii_fixed = reverse_destroy_adapter(processed_data)
-    
-    # 2. DES解密
-    return decrypt_insert_adapter(ascii_fixed)
+    def _search_adapter(self, input_str: str) -> str:
+        """逆向SearchAdapter的MD5哈希截断"""
+        md5 = hashlib.md5()
+        md5.update(input_str.encode('gbk'))
+        return md5.hexdigest()[10:30]  # 取第11-30位
+
+    def _instantiate_adapter(self, key: str) -> str:
+        """逆向InstantiateAdapter的路径生成(模拟)"""
+        # 注意：这是推测实现，实际需要根据原始代码调整
+        rotated = ''.join([chr(ord(c) - 1) for c in key])  # 简单位移
+        return rotated.replace('@', '\\')  # 转换为注册表路径格式
+
+    # ------------------------- 注册表操作 -------------------------
+
+    def _read_registry(self, path: str) -> Optional[str]:
+        """读取注册表值"""
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path) as key:
+                value, _ = winreg.QueryValueEx(key, "")
+                return str(value)
+        except WindowsError:
+            return None
+
+    def check_antivirus_installed(self) -> bool:
+        """检查杀毒软件注册表项"""
+        locations = [
+            r"Software\360m",
+            r"Software\pd",
+            r"Software\jfglzs\usb_jianche"
+        ]
+        return any(self._read_registry(loc) for loc in locations)
+
+    # ------------------------- 完整验证流程 -------------------------
+
+    def validate_password_change(
+        self, 
+        old_password: str, 
+        new_password: str,
+        check_antivirus: bool = True
+    ) -> dict:
+        """
+        完整密码修改验证流程
+        返回: {
+            "success": bool,
+            "message": str,
+            "requires_antivirus_uninstall": bool
+        }
+        """
+        # 1. 新密码检查
+        if len(new_password) < 6:
+            return {"success": False, "message": "新密码需≥6位"}
+        if new_password == "123456":
+            return {"success": False, "message": "密码太简单"}
+
+        # 2. 原密码验证
+        try:
+            # 加密流程: InsertAdapter → SearchAdapter
+            encrypted = self._encrypt_password(old_password)
+            input_hash = self._search_adapter(encrypted)
+            
+            # 获取注册表存储值
+            reg_path = self._instantiate_adapter(self.base_key + self.key_extension)
+            stored_hash = self._read_registry(reg_path)
+            
+            if not stored_hash or input_hash != stored_hash:
+                return {"success": False, "message": "原密码不正确"}
+        except Exception as e:
+            return {"success": False, "message": f"密码验证异常: {str(e)}"}
+
+        # 3. 杀毒软件检查
+        if check_antivirus and self.check_antivirus_installed():
+            return {
+                "success": False,
+                "message": "请卸载安全软件",
+                "requires_antivirus_uninstall": True
+            }
+
+        return {"success": True, "message": "验证通过"}
+
+    # ------------------------- 辅助方法 -------------------------
+
+    def _encrypt_password(self, password: str) -> str:
+        """模拟InsertAdapter加密流程"""
+        cipher = DES.new(self.des_key, DES.MODE_CBC, self.des_iv)
+        padded = password.encode('gbk') + bytes([8 - len(password) % 8] * (8 - len(password) % 8))
+        encrypted = cipher.encrypt(padded)
+        return base64.b64encode(encrypted).decode()
+
+    def generate_registry_hash(self, password: str) -> str:
+        """生成应存储在注册表中的哈希值"""
+        encrypted = self._encrypt_password(password)
+        return self._search_adapter(encrypted)
+
 
 if __name__ == "__main__":
-    print("=== DestroyAdapter单独解密测试 ===")
-    destroyed_data = "j]ij"  # "test"经过DestroyAdapter后的结果
-    print(f"原始数据: 'test' → DestroyAdapter处理后: {destroyed_data}")
-    print(f"逆向解密结果: {reverse_destroy_adapter(destroyed_data)}")
+    system = JfglzsPasswordSystem()
     
-    print("\n=== 完整解密流程测试 ===")
-    test_cases = [
-        "d4158ce43c3944953bb8",  # 您的第一个测试数据
-        "a1b2c3d4e5f6=",         # 您的第二个测试数据
-        "k3F5j7s2aXo="           # 之前的示例数据
-    ]
+    # 示例1: 密码验证测试
+    print("=== 密码验证测试 ===")
+    result = system.validate_password_change(
+        old_password="correct_password",
+        new_password="new_secure_pwd"
+    )
+    print(result)
+
+    # 示例2: 生成注册表哈希
+    print("\n=== 注册表哈希生成 ===")
+    hash_value = system.generate_registry_hash("my_password")
+    print(f"应存储在注册表中的哈希: {hash_value}")
+
+    # 示例3: 完整逆向测试
+    print("\n=== 完整逆向测试 ===")
+    test_password = "test123"
+    encrypted = system._encrypt_password(test_password)
+    print(f"加密结果: {encrypted}")
     
-    for encrypted in test_cases:
-        try:
-            print(f"\n尝试解密: {encrypted}")
-            result = full_decrypt(encrypted)
-            print(f"解密结果: {result!r}")  # 使用!r显示原始格式
-            print(f"十六进制表示: {result.encode('utf-8').hex()}")
-        except Exception as e:
-            print(f"解密出错: {e}")
+    decrypted = system._decrypt_insert_adapter(
+        system._reverse_destroy_adapter(encrypted)
+    )
+    print(f"解密结果: {decrypted}")

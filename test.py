@@ -1,63 +1,41 @@
-# -*- coding: GBK -*-
-import sys
-import getopt
-from datetime import datetime
+def rate_issuer(input_str):
+    """安全的加密函数"""
+    result = []
+    for char in input_str:
+        original = ord(char)
+        if 32 <= original <= 126:  # 可打印ASCII范围
+            new_code = (original - 10 - 32) % 95 + 32
+            result.append(chr(new_code))
+        else:
+            result.append(char)
+    return ''.join(result)
 
-def parse_arguments(argv):
-    """
-    解析命令行参数
-    返回: datetime对象
-    """
-    date_str = None
-    
-    try:
-        # 只解析-h和日期参数（非选项参数）
-        opts, args = getopt.getopt(argv, "h", ["help"])
-    except getopt.GetoptError as err:
-        print(f"参数错误: {err}")
-        print_help()
-        sys.exit(2)
-    
-    # 处理选项
-    for opt, _ in opts:
-        if opt in ("-h", "--help"):
-            print_help()
-            sys.exit()
-    
-    # 获取日期参数（非选项参数）
-    if len(args) == 1:
-        date_str = args[0]
-    elif len(args) > 1:
-        print("错误: 只能指定一个日期参数")
-        print_help()
-        sys.exit(2)
-    else:
-        print("错误: 必须指定日期参数")
-        print_help()
-        sys.exit(2)
-    
-    # 转换日期格式
-    try:
-        date_obj = datetime.strptime(date_str, "%Y%m%d")
-    except ValueError:
-        print(f"错误: 无效的日期格式 '{date_str}'，请使用YYYYMMDD格式")
-        print_help()
-        sys.exit(2)
-    
-    return date_obj
+def view_issuer(encrypted_str):
+    """对应的解密函数"""
+    result = []
+    for char in encrypted_str:
+        original = ord(char)
+        if 32 <= original <= 126:
+            new_code = (original + 10 - 32) % 95 + 32
+            result.append(chr(new_code))
+        else:
+            result.append(char)
+    return ''.join(result)
 
-def print_help():
-    """打印帮助信息"""
-    print("用法: script.py [选项] YYYYMMDD")
-    print("选项:")
-    print(" -h, --help  显示帮助信息")
-    print("\n示例:")
-    print(" script.py 20250401   # 处理2025年4月1日")
+# 测试
+test_cases = [
+    "Hello World!",
+    "Python 3.9",
+    "ABCabc123",
+    "Special@Chars#",
+    "低码点字符: \x01\x02",
+    "高码点字符: 你好"
+]
 
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        print_help()
-        sys.exit()
-    
-    date = parse_arguments(sys.argv[1:])
-    print(f"成功解析日期: {date.strftime('%Y-%m-%d')}")
+for text in test_cases:
+    print(f"原始: {text!r}")
+    encrypted = rate_issuer(text)
+    print(f"加密: {encrypted!r}")
+    decrypted = view_issuer(encrypted)
+    print(f"解密: {decrypted!r}")
+    print("-" * 40)

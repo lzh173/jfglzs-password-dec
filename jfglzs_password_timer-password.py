@@ -1,4 +1,5 @@
-# -*- coding: GBK -*-
+ï»¿# -*- coding: utf-8 -*-
+
 from getopt import getopt
 import getopt
 import base64
@@ -9,12 +10,12 @@ from datetime import datetime, timedelta
 from loguru import logger
 logo = '''
 
-¨€¨€¨€¨€¨€¨€¨[ ¨€¨€¨[   ¨€¨€¨[    ¨€¨€¨[     ¨€¨€¨€¨€¨€¨€¨€¨[¨€¨€¨[  ¨€¨€¨[ ¨€¨€¨[¨€¨€¨€¨€¨€¨€¨€¨[¨€¨€¨€¨€¨€¨€¨[ 
-¨€¨€¨X¨T¨T¨€¨€¨[¨^¨€¨€¨[ ¨€¨€¨X¨a    ¨€¨€¨U     ¨^¨T¨T¨€¨€¨€¨X¨a¨€¨€¨U  ¨€¨€¨U¨€¨€¨€¨U¨^¨T¨T¨T¨T¨€¨€¨U¨^¨T¨T¨T¨T¨€¨€¨[
-¨€¨€¨€¨€¨€¨€¨X¨a ¨^¨€¨€¨€¨€¨X¨a     ¨€¨€¨U       ¨€¨€¨€¨X¨a ¨€¨€¨€¨€¨€¨€¨€¨U¨^¨€¨€¨U    ¨€¨€¨X¨a ¨€¨€¨€¨€¨€¨X¨a
-¨€¨€¨X¨T¨T¨€¨€¨[  ¨^¨€¨€¨X¨a      ¨€¨€¨U      ¨€¨€¨€¨X¨a  ¨€¨€¨X¨T¨T¨€¨€¨U ¨€¨€¨U   ¨€¨€¨X¨a  ¨^¨T¨T¨T¨€¨€¨[
-¨€¨€¨€¨€¨€¨€¨X¨a   ¨€¨€¨U       ¨€¨€¨€¨€¨€¨€¨€¨[¨€¨€¨€¨€¨€¨€¨€¨[¨€¨€¨U  ¨€¨€¨U ¨€¨€¨U   ¨€¨€¨U  ¨€¨€¨€¨€¨€¨€¨X¨a
-¨^¨T¨T¨T¨T¨T¨a    ¨^¨T¨a       ¨^¨T¨T¨T¨T¨T¨T¨a¨^¨T¨T¨T¨T¨T¨T¨a¨^¨T¨a  ¨^¨T¨a ¨^¨T¨a   ¨^¨T¨a  ¨^¨T¨T¨T¨T¨T¨a 
+â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ•—   â–ˆâ–ˆâ•—    â–ˆâ–ˆâ•—     â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•—  â–ˆâ–ˆâ•— â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— 
+â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â•šâ–ˆâ–ˆâ•— â–ˆâ–ˆâ•”â•    â–ˆâ–ˆâ•‘     â•šâ•â•â–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ•‘â•šâ•â•â•â•â–ˆâ–ˆâ•‘â•šâ•â•â•â•â–ˆâ–ˆâ•—
+â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â• â•šâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•     â–ˆâ–ˆâ•‘       â–ˆâ–ˆâ–ˆâ•”â• â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•”â• â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•
+â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—  â•šâ–ˆâ–ˆâ•”â•      â–ˆâ–ˆâ•‘      â–ˆâ–ˆâ–ˆâ•”â•  â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•‘ â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•”â•  â•šâ•â•â•â–ˆâ–ˆâ•—
+â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•   â–ˆâ–ˆâ•‘       â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘ â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•
+â•šâ•â•â•â•â•â•    â•šâ•â•       â•šâ•â•â•â•â•â•â•â•šâ•â•â•â•â•â•â•â•šâ•â•  â•šâ•â• â•šâ•â•   â•šâ•â•  â•šâ•â•â•â•â•â• 
                                                                                                                                                    
 '''
 
@@ -23,13 +24,13 @@ o0o0o = bytes("6aG555uu5Li76aG177yaaHR0cHM6Ly9naXRodWIuY29tL2x6aDE3My9qZmdsenMtc
 ax = base64.b64decode(oo000)
 bg = base64.b64decode(o0o0o)
 def print_help():
-    """´òÓ¡°ïÖúĞÅÏ¢"""
-    #ÒÑÆúÓÃ£¡
-    print("ÓÃ·¨: script.py YYYYMMDD")
-    print("Ñ¡Ïî:")
-    print(" -h, --help  ÏÔÊ¾°ïÖúĞÅÏ¢")
-    print("\nÊ¾Àı:")
-    print(" script.py 20250401   #¼ÆËã2025Äê4ÔÂ1ÈÕµÄÁÙÊ±ÃÜÂë")
+    """æ‰“å°å¸®åŠ©ä¿¡æ¯"""
+    #å·²å¼ƒç”¨ï¼
+    print("ç”¨æ³•: script.py YYYYMMDD")
+    print("é€‰é¡¹:")
+    print(" -h, --help  æ˜¾ç¤ºå¸®åŠ©ä¿¡æ¯")
+    print("\nç¤ºä¾‹:")
+    print(" script.py 20250401   #è®¡ç®—2025å¹´4æœˆ1æ—¥çš„ä¸´æ—¶å¯†ç ")
 
 
 
@@ -49,9 +50,10 @@ def flush_issuer(date_str):
 
 def sort_issuer(date_str):
     date_time = flush_issuer(date_str)
-    # Èç¹ûÊ±¼äÎªÁãµãÔòÊ¹ÓÃµ±Ç°Ê±¼ä£¨Èİ´íÂß¼­£©
+    # å¦‚æœæ—¶é—´ä¸ºé›¶ç‚¹åˆ™ä½¿ç”¨å½“å‰æ—¶é—´ï¼ˆå®¹é”™é€»è¾‘ï¼‰
     if date_time.time() == datetime.min.time():
         date_time = datetime.utcnow() + timedelta(hours=8)
+       
     
     month_part = date_time.month * 13
     day_part = date_time.day * 57
@@ -61,7 +63,7 @@ def sort_issuer(date_str):
 
 def sort_issuerb(date_str):
     date_time = flush_issuer(date_str)
-    # Èç¹ûÊ±¼äÎªÁãµãÔòÊ¹ÓÃµ±Ç°Ê±¼ä£¨Èİ´íÂß¼­£©
+    # å¦‚æœæ—¶é—´ä¸ºé›¶ç‚¹åˆ™ä½¿ç”¨å½“å‰æ—¶é—´ï¼ˆå®¹é”™é€»è¾‘ï¼‰
     if date_time.time() == datetime.min.time():
         date_time = datetime.utcnow() + timedelta(hours=8)
     
@@ -83,40 +85,46 @@ def disable_issuer(pd_old_text):
     if first_char != "8" or remaining != valid_code:
         return False, "error", ""
     else:
-        # ´Ë´¦Ö´ĞĞÑéÖ¤Í¨¹ıºóµÄ²Ù×÷£¨Ô­C#ÖĞµÄNewIssuerºÍQueryIssuer£©
+        # æ­¤å¤„æ‰§è¡ŒéªŒè¯é€šè¿‡åçš„æ“ä½œï¼ˆåŸC#ä¸­çš„NewIssuerå’ŒQueryIssuerï¼‰
         return True, "", valid_code
 
 
-# Ê¹ÓÃÊ¾Àı
+# ä½¿ç”¨ç¤ºä¾‹
 if __name__ == "__main__":
+    logger.add(
+        "log.log",
+        encoding="utf-8",
+        rotation="500 MB",
+        retention="10 days",
+    )
     print(logo)
     print(ax.decode())
     print(bg.decode())
-    logger.info("ÇëÊäÈëYYYYMMDD¸ñÊ½µÄÊ±¼ä:")
+    logger.info("è¯·è¾“å…¥YYYYMMDDæ ¼å¼çš„æ—¶é—´:")
     date_str = input()
     if date_str == "":
-        logger.debug("Ã»ÓĞÊäÈëÊ±¼ä£¬Ä¬ÈÏ¼ÆËã½ñÈÕÁÙÊ±ÃÜÂë")
-    logger.info("ÊäÈëÊ±¼ä£º" + str(flush_issuer(date_str)))
+        logger.debug("æ²¡æœ‰è¾“å…¥æ—¶é—´ï¼Œé»˜è®¤è®¡ç®—ä»Šæ—¥ä¸´æ—¶å¯†ç ")
+    logger.info("è¾“å…¥æ—¶é—´ï¼š" + str(flush_issuer(date_str)))
     while True:
-        logger.info("ÇëÑ¡Ôñ»ú·¿¹ÜÀíÖúÊÖ°æ±¾")
-        logger.info("ÊäÈë1Îª10.0ÒÔÏÂ£¬ÊäÈë2Îª10.1ÒÔÉÏ")
+        logger.info("è¯·é€‰æ‹©æœºæˆ¿ç®¡ç†åŠ©æ‰‹ç‰ˆæœ¬")
+        logger.info("è¾“å…¥1ä¸º10.0ä»¥ä¸‹ï¼Œè¾“å…¥2ä¸º10.1ä»¥ä¸Š")
         ins = str(input())
         if ins == "1":
-            logger.info("ÄãÑ¡ÔñÁË10.0ÒÔÏÂ°æ±¾")
-            valid_code = "8" + sort_issuer(date_str).strip()
-            print(f"10.0ÒÔÏÂ°æ±¾ÁÙÊ±ÃÜÂë: {valid_code}")
-            logger.info("Çë°´»Ø³µ¼üÍË³ö")
+            logger.info("ä½ é€‰æ‹©äº†10.0ä»¥ä¸‹ç‰ˆæœ¬")
+            valid_code = "8" + sort_issuerb(date_str).strip()
+            print(f"10.0ä»¥ä¸‹ç‰ˆæœ¬ä¸´æ—¶å¯†ç : {valid_code}")
+            logger.info("è¯·æŒ‰å›è½¦é”®é€€å‡º")
             input()
             sys.exit()
         if ins == "2":
-            logger.info("ÄãÑ¡ÔñÁË10.1ÒÔÉÏ°æ±¾")
-            valid_code = "8" + sort_issuerb(date_str).strip()
-            print(f"10.1ÒÔÉÏ°æ±¾ÁÙÊ±ÃÜÂë: {valid_code}")
-            logger.info("Çë°´»Ø³µ¼üÍË³ö")
+            logger.info("ä½ é€‰æ‹©äº†10.1ä»¥ä¸Šç‰ˆæœ¬")
+            valid_code = "8" + sort_issuer(date_str).strip()
+            print(f"10.1ä»¥ä¸Šç‰ˆæœ¬ä¸´æ—¶å¯†ç : {valid_code}")
+            logger.info("è¯·æŒ‰å›è½¦é”®é€€å‡º")
             input()
             sys.exit()
         if ins == "":
-            logger.critical("Ã»ÓĞÑ¡Ôñ£¡ÇëÖØĞÂÊäÈë")
+            logger.critical("æ²¡æœ‰é€‰æ‹©ï¼è¯·é‡æ–°è¾“å…¥")
             continue
         
 
